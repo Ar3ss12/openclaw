@@ -18,6 +18,8 @@ export type SessionOrigin = {
   chatType?: SessionChatType;
   from?: string;
   to?: string;
+  nativeChannelId?: string;
+  nativeDirectUserId?: string;
   accountId?: string;
   threadId?: string | number;
 };
@@ -68,6 +70,7 @@ export type AcpSessionRuntimeOptions = {
 export type CliSessionBinding = {
   sessionId: string;
   authProfileId?: string;
+  authEpoch?: string;
   extraSystemPromptHash?: string;
   mcpConfigHash?: string;
 };
@@ -99,6 +102,12 @@ export type SessionEntry = {
   subagentRole?: "orchestrator" | "leaf";
   /** Explicit control scope assigned at spawn time for subagent control decisions. */
   subagentControlScope?: "children" | "none";
+  /** Optional filesystem tool policy captured for spawned subagent sessions (effective ceiling). */
+  spawnedToolFsPolicy?: {
+    workspaceOnly: boolean;
+    allowedPaths?: string[];
+    denyPaths?: string[];
+  };
   systemSent?: boolean;
   abortedLastRun?: boolean;
   /** Stable first-run start time for subagent sessions, persisted after completion. */

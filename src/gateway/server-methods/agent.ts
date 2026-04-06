@@ -3,6 +3,7 @@ import { listAgentIds } from "../../agents/agent-scope.js";
 import type { AgentInternalEvent } from "../../agents/internal-events.js";
 import {
   normalizeSpawnedRunMetadata,
+  resolveIngressToolFsPolicyOverrideForSpawnedRun,
   resolveIngressWorkspaceOverrideForSpawnedRun,
 } from "../../agents/spawned-context.js";
 import { buildBareSessionResetPrompt } from "../../auto-reply/reply/session-reset-prompt.js";
@@ -192,7 +193,10 @@ function dispatchAgentRunFromGateway(params: {
   respond: GatewayRequestHandlerOptions["respond"];
   context: GatewayRequestHandlerOptions["context"];
 }) {
-  if (params.ingressOpts.sessionKey?.trim()) {
+  const inputProvenance = normalizeInputProvenance(params.ingressOpts.inputProvenance);
+  const shouldTrackTask =
+    params.ingressOpts.sessionKey?.trim() && inputProvenance?.kind !== "inter_session";
+  if (shouldTrackTask) {
     try {
       createRunningTaskRun({
         runtime: "cli",
@@ -842,6 +846,11 @@ export const agentHandlers: GatewayRequestHandlers = {
         workspaceDir: resolveIngressWorkspaceOverrideForSpawnedRun({
           spawnedBy: spawnedByValue,
           workspaceDir: sessionEntry?.spawnedWorkspaceDir,
+        }),
+        // Internal-only: allow tool fs policy override for spawned subagent runs.
+        toolFsPolicy: resolveIngressToolFsPolicyOverrideForSpawnedRun({
+          spawnedBy: spawnedByValue,
+          toolFsPolicy: sessionEntry?.spawnedToolFsPolicy,
         }),
         senderIsOwner,
         allowModelOverride,
